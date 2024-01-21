@@ -19,7 +19,7 @@ np.random.seed(42)
 
 @dataclass
 class DecisionTree:
-    criterion: Literal["information_gain", "gini_index"]  # criterion won't be used for regression
+    criterion: Literal["information_gain", "gini_index", "mse", "mae"]  # criterion won't be used for regression, i will use it for regression
     max_depth: int  # The maximum depth the tree can grow to
 
     def __init__(self, criterion, max_depth=5):
@@ -30,10 +30,9 @@ class DecisionTree:
         """
         Function to train and construct the decision tree
         """
-
         # If you wish your code can have cases for different types of input and output data (discrete, real)
         # Use the functions from utils.py to find the optimal attribute to split upon and then construct the tree accordingly.
-        # You may(according to your implemetation) need to call functions recursively to construct the tree. 
+        # You may(according to your implemetation) need to call functions recursively to construct the tree.
 
         pass
 
