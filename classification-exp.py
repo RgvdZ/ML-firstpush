@@ -16,3 +16,11 @@ plt.scatter(X[:, 0], X[:, 1], c=y)
 
 # Write the code for Q2 a) and b) below. Show your results.
 
+# Q2 a)
+# Code for Q2 a) goes here
+
+# Q2 b)
+# Code for Q2 b) goes here
+
+#plt.show()  # Show the plot
+plt.savefig('output.png')

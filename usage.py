@@ -87,20 +87,3 @@ for criteria in ["information_gain", "gini_index"]:
     print("Criteria :", criteria)
     print("RMSE: ", rmse(y_hat, y))
     print("MAE: ", mae(y_hat, y))
-
-
-# Test case for regression with real-valued attributes
-
-N = 50  # Increase the number of instances
-P = 10  # Increase the number of features
-X = pd.DataFrame(np.random.randn(N, P))
-y = pd.Series(np.random.randn(N) * 10)  # Increase the range of the target variable
-
-for criteria in ["mse", "mae"]:  # Use Mean Squared Error and Mean Absolute Error as splitting criteria
-    tree = DecisionTree(criterion=criteria)
-    tree.fit(X, y)
-    y_hat = tree.predict(X)
-    tree.plot()
-    print("Criteria :", criteria)
-    print("RMSE: ", rmse(y_hat, y))
-    print("MAE: ", mae(y_hat, y))

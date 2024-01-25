@@ -4,6 +4,7 @@ There is no restriction on following the below template, these fucntions are her
 """
 
 import pandas as pd
+import numpy as np
 
 
 def check_ifreal(y: pd.Series) -> bool:
@@ -52,17 +53,10 @@ def information_gain(Y: pd.Series, attr: pd.Series) -> float:
     """
     Function to calculate the information gain
     """
+    attr = attr.astype(bool)  # convert attr to a boolean mask
     a = sum(attr)
     b = attr.shape[0] - a
-
-    if a == 0 or b == 0:
-        ig = 0
-    else:
-        if Y.dtypes != 'O':
-            ig = variance(Y) - (a / (a + b) * variance(Y[attr])) - (b / (a + b) * variance(Y[~attr]))
-        else:
-            ig = func(Y) - a / (a + b) * func(Y[attr]) - b / (a + b) * func(Y[~attr])
-
+    ig = np.var(Y) - (a / (a + b) * np.var(Y[attr])) - (b / (a + b) * np.var(Y[~attr]))
     return ig
 
 
@@ -128,3 +122,113 @@ def split_data(X: pd.DataFrame, y: pd.Series, attribute, value):  #edit this fun
         y_split = y[mask]
 
     return X_split, y_split
+
+def variance_reduction(Y: pd.Series, attr: pd.Series , threshold = None , input_type = 'r' ) -> float:
+    """
+    Calculates reduction in variance for the passed attribute
+    """
+    data = pd.DataFrame()
+    data['attr'] = attr
+    data['y'] = Y
+
+    # When Input is Real
+    if input_type == 'r':
+
+        # Segregating data for variance calculation
+        left_data = data[data['attr']<=threshold]['y']
+        right_data = data[data['attr']>threshold]['y']
+
+        # Split made should have some samples...they cant be zero
+        if (len(right_data) > 0) and (len(left_data) >0) :
+
+            #Calculating weights of left and right sub-tree
+            left_wt = len(left_data)/len(data)
+            right_wt = len(right_data)/len(data)
+
+            var_red = np.var(data['y']) - (left_wt*np.var(left_data) + right_wt*np.var(right_data))
+            return var_red
+
+        # If the either of the split data has size zero then variance reduction becomes zero
+        return 0
+
+    # When Input is Discrete
+    else:
+
+        # Calculating variance of entire set
+        var_red = np.var(Y)
+
+        #Toggling through the unique values of given attribute
+        for val in data['attr'].unique():
+
+            # Creating a Data Split based on the current value
+            Data_split = data[data['attr']==val]
+
+            # Weight of the Split
+            val_wt = len(Data_split)/len(data)
+            var_red = var_red - val_wt*np.var(Data_split['y'])
+
+        return var_red
+
+
+
+
+def BestSplit( Dataset : pd.DataFrame , output_type = 'r' , input_type = 'r', criteria = 'information_gain') -> dict:
+    """
+    Determines the best split that could be made in the given Dataset
+    """
+    #input_type = 'r'
+
+    #initializing variable
+    split = {}
+    max = -np.inf
+
+    # When input is Real
+    if input_type == 'r':
+
+        # Loop through all the available columns
+        for features in Dataset.iloc[:,:-1].columns:
+
+            # Toggling through all the possible splits.
+            for possible_split in pd.unique(Dataset.iloc[:,:-1][features]):
+
+                if output_type == 'r':
+                    # For real output we do variance reduction calculation
+                    curr_var = variance_reduction(Dataset.iloc[:,-1] , Dataset.iloc[:,:-1][features] , possible_split , input_type )
+                else:
+                    # For discrete output we do information gain calculation
+                    curr_var = information_gain(Dataset.iloc[:,-1] , Dataset.iloc[:,:-1][features] , criteria , possible_split, input_type )
+
+                # Building split dict values
+                if curr_var  > max:
+                    split["feature"] = features
+                    split["split"] = possible_split
+                    split["val"] = curr_var
+                    max = curr_var
+
+        return split
+
+    # When input is discrete
+    else:
+
+        split = {}
+        max = -np.inf
+
+        # Loop through all the available columns
+        for features in Dataset.iloc[:,:-1].columns:
+
+            if output_type == 'r':
+                # For real output we do variance reduction calculation
+                curr_var = variance_reduction(Dataset.iloc[:,-1] , Dataset.iloc[:,:-1][features] , None , input_type )
+            else:
+                # For discrete output we do information gain calculation
+                curr_var = information_gain(Dataset.iloc[:,-1] , Dataset.iloc[:,:-1][features] , criteria , None, input_type )
+
+            # Building split dict values
+            if curr_var  > max:
+                split["feature"] = features
+                split["split"] = None
+                split["val"] = curr_var
+                max = curr_var
+
+        return split
+
